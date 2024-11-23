@@ -68,10 +68,15 @@ The `.env` file should look like this:
 ```plain
 DOCKER_COMPOSE_PROJECTS_DIR='/path/to/your/docker-compose-projects'
 BACKUP_DIR='/path/to/your/backup/directory'
+
 CRON_SCHEDULE=*/10 * * * *
 GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER=''
-KEYWORD_TO_EXCLUDE_FROM_BACKUP='tmp'
+
+# This should not be changed, if 'domposbi' is also in the Docker Compose projects directory!
+KEYWORD_TO_EXCLUDE_FROM_BACKUP='domposbi'
+
 KEEP_BACKUPS=10
+
 # Optional
 ENABLE_DEBUG_MODE=false
 ENABLE_DRY_RUN=false

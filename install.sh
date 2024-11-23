@@ -132,12 +132,6 @@ read -r GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER ||
 echo
 
 echo
-echo "Enter the keyword to exclude from the backup (press enter if not needed):"
-read -r KEYWORD_TO_EXCLUDE_FROM_BACKUP ||
-    abort "Failed to read the keyword to exclude from the backup"
-echo
-
-echo
 echo "Enter the number of backups to keep ('all' or a number):"
 read -r KEEP_BACKUPS ||
     abort "Failed to read the value for backups to keep"
@@ -147,10 +141,15 @@ echo "Creating the '.env' file..."
 cat <<EOF >.env
 DOCKER_COMPOSE_PROJECTS_DIR='$DOCKER_COMPOSE_PROJECTS_DIR'
 BACKUP_DIR='$BACKUP_DIR'
+
 CRON_SCHEDULE=$CRON_SCHEDULE
 GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER='$GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER'
-KEYWORD_TO_EXCLUDE_FROM_BACKUP=$KEYWORD_TO_EXCLUDE_FROM_BACKUP
+
+# This should not be changed, if '$PROJECT_NAME' is also in the Docker Compose projects directory!
+KEYWORD_TO_EXCLUDE_FROM_BACKUP='$PROJECT_NAME'
+
 KEEP_BACKUPS=$KEEP_BACKUPS
+
 # Optional
 ENABLE_DEBUG_MODE=$ENABLE_DEBUG_MODE
 ENABLE_DRY_RUN=$ENABLE_DRY_RUN
