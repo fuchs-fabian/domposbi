@@ -620,6 +620,8 @@ function get_cron_job_command {
         cron_job_command+=("--notifier" "$simbashlog_notifier")
     fi
 
+    cron_job_command+=("--disable-summary-on-exit")
+
     echo "${cron_job_command[@]}"
 }
 

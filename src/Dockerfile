@@ -48,7 +48,7 @@ RUN /tmp/repo_script_installer.bash "https://github.com/fuchs-fabian/simbashlog.
 
 RUN echo "Installing 'domposy'..."
 
-RUN /tmp/repo_script_installer.bash "https://github.com/fuchs-fabian/domposy.git" "v2.1.0"
+RUN /tmp/repo_script_installer.bash "https://github.com/fuchs-fabian/domposy.git" "v2.2.0"
 
 # ╔═════════════════════╦══════════════════════╗
 # ║                                            ║
