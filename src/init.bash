@@ -32,7 +32,7 @@
 
 declare -r CONST_ORIGINAL_PATH_ENV="$PATH"
 
-declare -r CONST_MAIN_SCRIPT_PATH="/usr/bin/main.bash"
+declare -r CONST_MAIN_SCRIPT_PATH="/usr/bin/domposy"
 
 # ╔═════════════════════╦══════════════════════╗
 # ║                                            ║
@@ -91,17 +91,30 @@ function print_env_var_or_abort {
     echo "'${var_name}': '${!var_name}'"
 }
 
-# TODO: Add all variables that are defined in the 'docker-compose.yml' file under 'environment' here
-print_env_var_or_abort "LOG_LEVEL" true
+print_env_var_or_abort "DOCKER_COMPOSE_PROJECTS_DIR" true
+print_env_var_or_abort "BACKUP_DIR" true
 print_env_var_or_abort "CRON_SCHEDULE" true
 print_env_var_or_abort "GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER"
+print_env_var_or_abort "KEYWORD_TO_EXCLUDE_FROM_BACKUP"
+print_env_var_or_abort "KEEP_BACKUPS"
+print_env_var_or_abort "ENABLE_DEBUG_MODE"
+print_env_var_or_abort "ENABLE_DRY_RUN"
 
-# shellcheck disable=SC2153
-declare -r CONST_CRON_JOB_LOG_LEVEL="$LOG_LEVEL"
+declare -r CONST_INTERNAL_DOCKER_COMPOSE_PROJECTS_DIR="/data/projects/"
+declare -r CONST_INTERNAL_BACKUP_DIR="/data/backups/"
+
 # shellcheck disable=SC2153
 declare -r CONST_CRON_JOB_SCHEDULE="$CRON_SCHEDULE"
 # shellcheck disable=SC2153
 declare -r CONST_GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER="$GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER"
+# shellcheck disable=SC2153
+declare -r CONST_KEYWORD_TO_EXCLUDE_FROM_BACKUP="$KEYWORD_TO_EXCLUDE_FROM_BACKUP"
+# shellcheck disable=SC2153
+declare -r CONST_KEEP_BACKUPS="$KEEP_BACKUPS"
+# shellcheck disable=SC2153
+declare -r CONST_CRON_JOB_ENABLE_DEBUG_MODE="${ENABLE_DEBUG_MODE:-false}"
+# shellcheck disable=SC2153
+declare -r CONST_CRON_JOB_ENABLE_DRY_RUN="${ENABLE_DRY_RUN:-false}"
 
 # ░░░░░░░░░░░░░░░░░░░░░▓▓▓░░░░░░░░░░░░░░░░░░░░░░
 # ░░                                          ░░
@@ -566,21 +579,48 @@ log_debug_delimiter_end 1 "SIMBASHLOG NOTIFIER SETUP"
 # ║                                            ║
 # ╚═════════════════════╩══════════════════════╝
 
-# TODO: Adjust the current section to your needs
+create_dir_if_not_exists "$CONST_INTERNAL_DOCKER_COMPOSE_PROJECTS_DIR" ||
+    log_and_abort "Failed to create directory '$CONST_INTERNAL_DOCKER_COMPOSE_PROJECTS_DIR'"
+
+create_dir_if_not_exists "$CONST_INTERNAL_BACKUP_DIR" ||
+    log_and_abort "Failed to create directory '$CONST_INTERNAL_BACKUP_DIR'"
 
 function get_cron_job_command {
-    local cron_job_command
+    local cron_job_command=("$CONST_MAIN_SCRIPT_PATH")
 
-    cron_job_command="$CONST_MAIN_SCRIPT_PATH \"$CONST_CRON_JOB_LOG_LEVEL\" \"$CONST_LOG_DIR\""
+    if is_true "$CONST_CRON_JOB_ENABLE_DEBUG_MODE"; then
+        cron_job_command+=("--debug")
+    fi
+
+    if is_true "$CONST_CRON_JOB_ENABLE_DRY_RUN"; then
+        cron_job_command+=("--dry-run")
+    fi
+
+    cron_job_command+=(
+        "--action" "backup"
+        "--search-dir" "$CONST_INTERNAL_DOCKER_COMPOSE_PROJECTS_DIR"
+    )
+
+    if is_var_not_empty "$CONST_KEYWORD_TO_EXCLUDE_FROM_BACKUP"; then
+        cron_job_command+=("--exclude-dir" "$CONST_KEYWORD_TO_EXCLUDE_FROM_BACKUP")
+    fi
+
+    cron_job_command+=("--backup-dir" "$CONST_INTERNAL_BACKUP_DIR")
+
+    if is_var_not_empty "$CONST_KEEP_BACKUPS"; then
+        cron_job_command+=("--keep-backups" "$CONST_KEEP_BACKUPS")
+    fi
+
+    cron_job_command+=("--log-dir" "$CONST_LOG_DIR")
 
     local simbashlog_notifier
     simbashlog_notifier=$(get_simbashlog_notifier_for_cron_job)
 
     if is_var_not_empty "$simbashlog_notifier"; then
-        cron_job_command="$cron_job_command \"$simbashlog_notifier\""
+        cron_job_command+=("--notifier" "$simbashlog_notifier")
     fi
 
-    echo "$cron_job_command"
+    echo "${cron_job_command[@]}"
 }
 
 # ╔═════════════════════╦══════════════════════╗

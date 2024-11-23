@@ -42,14 +42,13 @@ RUN /tmp/repo_script_installer.bash "https://github.com/fuchs-fabian/simbashlog.
 
 # ╔═════════════════════╦══════════════════════╗
 # ║                                            ║
-# ║                MAIN SCRIPT                 ║
+# ║                  DOMPOSY                   ║
 # ║                                            ║
 # ╚═════════════════════╩══════════════════════╝
 
-RUN echo "Adding main script for cron job..."
+RUN echo "Installing 'domposy'..."
 
-COPY main.bash /usr/bin/main.bash
-RUN chmod +x /usr/bin/main.bash
+RUN /tmp/repo_script_installer.bash "https://github.com/fuchs-fabian/domposy.git" "v2.1.0"
 
 # ╔═════════════════════╦══════════════════════╗
 # ║                                            ║

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
-REPO_URL="https://github.com/fuchs-fabian/simbashlog-debian-docker-template.git" # TODO: Set the git repo url for the project
-BRANCH_NAME="main"                                                               # TODO: Set the branch name for the project
+REPO_URL="https://github.com/fuchs-fabian/domposbi.git"
+BRANCH_NAME="main"
 
 # ░░░░░░░░░░░░░░░░░░░░░▓▓▓░░░░░░░░░░░░░░░░░░░░░░
 # ░░                                          ░░
@@ -41,7 +41,6 @@ PROJECT_NAME=$(basename $REPO_URL .git)
 # ║                                            ║
 # ╚═════════════════════╩══════════════════════╝
 
-# TODO: Add more commands if needed
 check_command "git"
 check_command "docker"
 
@@ -54,8 +53,6 @@ docker compose version >/dev/null 2>&1 ||
 # ║         CHECK FOR PROJECT ARTIFACTS        ║
 # ║                                            ║
 # ╚═════════════════════╩══════════════════════╝
-
-# TODO: Remove this section if not needed
 
 if [ -d "$PROJECT_NAME" ]; then
     echo
@@ -111,9 +108,22 @@ cd "$PROJECT_NAME" ||
 
 echo "Setting up the '.env' file..."
 
-LOG_LEVEL=6
 CRON_JOB_MINUTES=10
 CRON_SCHEDULE="*/$CRON_JOB_MINUTES * * * *"
+ENABLE_DEBUG_MODE=false
+ENABLE_DRY_RUN=false
+
+echo
+echo "Enter the projects directory for the Docker Compose projects:"
+read -r DOCKER_COMPOSE_PROJECTS_DIR ||
+    abort "Failed to read the directory for the Docker Compose projects"
+echo
+
+echo
+echo "Enter the backup directory:"
+read -r BACKUP_DIR ||
+    abort "Failed to read the backup directory"
+echo
 
 echo
 echo "Enter the git repo url for the 'simbashlog' notifier (press enter if not needed):"
@@ -121,21 +131,33 @@ read -r GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER ||
     abort "Failed to read the git repo url for the 'simbashlog' notifier"
 echo
 
-# TODO: Add more variables for the '.env' file if needed. Do not forget to add them to the '.env' file creation below.
+echo
+echo "Enter the keyword to exclude from the backup (press enter if not needed):"
+read -r KEYWORD_TO_EXCLUDE_FROM_BACKUP ||
+    abort "Failed to read the keyword to exclude from the backup"
+echo
+
+echo
+echo "Enter the number of backups to keep ('all' or a number):"
+read -r KEEP_BACKUPS ||
+    abort "Failed to read the value for backups to keep"
+echo
 
 echo "Creating the '.env' file..."
 cat <<EOF >.env
-LOG_LEVEL=$LOG_LEVEL
+DOCKER_COMPOSE_PROJECTS_DIR='$DOCKER_COMPOSE_PROJECTS_DIR'
+BACKUP_DIR='$BACKUP_DIR'
 CRON_SCHEDULE=$CRON_SCHEDULE
 GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER='$GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER'
+KEYWORD_TO_EXCLUDE_FROM_BACKUP=$KEYWORD_TO_EXCLUDE_FROM_BACKUP
+KEEP_BACKUPS=$KEEP_BACKUPS
+# Optional
+ENABLE_DEBUG_MODE=$ENABLE_DEBUG_MODE
+ENABLE_DRY_RUN=$ENABLE_DRY_RUN
 EOF
 
 cat .env ||
     abort "Failed to create the '.env' file"
-
-echo
-echo "The log level is set to '$LOG_LEVEL'"
-echo "  (0 = emergency, 1 = alert, 2 = critical, 3 = error, 4 = warning, 5 = notice, 6 = info, 7 = debug)"
 
 echo "The cron job will run every $CRON_JOB_MINUTES minutes."
 
@@ -163,8 +185,6 @@ rm -rf .git ||
 
 rm install.sh ||
     abort "Failed to remove the install script from the project directory"
-
-# TODO: Add more cleanup for git artifacts if needed
 
 # ╔═════════════════════╦══════════════════════╗
 # ║                                            ║

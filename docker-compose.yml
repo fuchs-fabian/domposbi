@@ -1,15 +1,20 @@
-# TODO: Change `example` to the name of the service you want to run and adjust the docker-compose file to your needs
 services:
-  example:
-    container_name: example
+  domposbi:
+    container_name: domposbi
     # No image available, build from source
     build:
       context: ./src
     restart: unless-stopped
     environment:
-      - LOG_LEVEL
+      - DOCKER_COMPOSE_PROJECTS_DIR
+      - BACKUP_DIR
       - CRON_SCHEDULE
       - GIT_REPO_URL_FOR_SIMBASHLOG_NOTIFIER
+      - KEYWORD_TO_EXCLUDE_FROM_BACKUP
+      - KEEP_BACKUPS
+      # Optional
+      - ENABLE_DEBUG_MODE
+      - ENABLE_DRY_RUN
     volumes:
       # Logs - Comment out to disable logging to host
       - type: bind
@@ -23,3 +28,18 @@ services:
         target: /root/.config/simbashlog-notifier
         bind:
           create_host_path: true
+      # Docker socket - This is needed to shutdown and restart the containers during the backup process
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      # Directory with the Docker Compose projects
+      - type: bind
+        source: $DOCKER_COMPOSE_PROJECTS_DIR
+        target: /data/projects
+        read_only: true
+      # Directory to store the backups
+      - type: bind
+        source: $BACKUP_DIR
+        target: /data/backups
+        bind:
+          create_host_path: false
